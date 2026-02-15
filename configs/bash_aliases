@@ -1,0 +1,42 @@
+# ============================================
+# 自定义 Bash 别名
+# ============================================
+
+# ls 增强别名
+alias ll='ls -lF'
+alias lla='ls -alF'
+alias llh='ls -alFh'
+alias la='ls -Ah'
+alias l='ls -CFh'
+
+# Claude Code
+alias claude='claude --dangerously-skip-permissions'
+
+# tmux 快捷别名
+alias ta='tmux attach'
+alias tat='tmux attach -t'
+alias tl='tmux ls'
+alias tn='tmux new -s'
+alias tk='tmux kill-session -t'
+alias td='tmux detach'
+alias ts='tmux switch-client -t'
+
+# Vim + Markdown 快捷别名
+alias mdp='glow -p'
+alias mde='tmux new -s md vim'
+
+# 导航别名
+alias ..='cd ..'
+alias ...='cd ../..'
+alias ....='cd ../../..'
+alias cls='clear'
+
+# Git 别名
+alias gs='git status'
+alias ga='git add'
+alias gc='git commit -m'
+alias gp='git push'
+alias gl='git log --oneline -10'
+alias gd='git diff'
+alias gco='git checkout'
+alias gb='git branch'
