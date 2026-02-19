@@ -1,13 +1,21 @@
 # ============================================
-# 自定义 Bash 别名
+# 自定义 Shell 别名（macOS / Linux 通用）
 # ============================================
 
-# ls 增强别名
-alias ll='ls -lF'
-alias lla='ls -alF'
-alias llh='ls -alFh'
-alias la='ls -Ah'
-alias l='ls -CFh'
+# ls 增强别名（macOS 用 -G 启用颜色，Linux 用 --color=auto）
+if [[ "$(uname)" == "Darwin" ]]; then
+    alias ll='ls -lFG'
+    alias lla='ls -alFG'
+    alias llh='ls -alFhG'
+    alias la='ls -AhG'
+    alias l='ls -CFhG'
+else
+    alias ll='ls -lF --color=auto'
+    alias lla='ls -alF --color=auto'
+    alias llh='ls -alFh --color=auto'
+    alias la='ls -Ah --color=auto'
+    alias l='ls -CFh --color=auto'
+fi
 
 # Claude Code
 alias claude='claude --dangerously-skip-permissions'

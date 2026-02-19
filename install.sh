@@ -1,16 +1,17 @@
 #!/bin/bash
 # ============================================
-# dotfiles 一键安装脚本
+# dotfiles 一键安装脚本（macOS / Linux 双平台）
 # ============================================
 #
 # 用法: bash install.sh
 #
 # 功能:
-#   1. 安装依赖工具 (tmux, vim, glow, xclip, git)
-#   2. 部署配置文件 (.tmux.conf, .vimrc, bash_aliases)
-#   3. 安装 tmux 插件 (TPM, tmux-resurrect, tmux-continuum)
-#   4. 复制参考文档
-#   5. 显示安装结果摘要
+#   1. 自动检测系统（macOS / Linux）
+#   2. 安装依赖工具 (tmux, vim, glow, git, xclip[仅Linux])
+#   3. 部署配置文件 (.tmux.conf, .vimrc, aliases)
+#   4. 安装 tmux 插件 (TPM, tmux-resurrect, tmux-continuum)
+#   5. 复制参考文档
+#   6. 显示安装结果摘要
 #
 # ============================================
 
@@ -25,6 +26,16 @@ NC='\033[0m' # No Color
 
 # 脚本所在目录
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# 检测操作系统
+OS="$(uname)"
+
+# 根据系统设置目标 shell 配置文件
+if [[ "$OS" == "Darwin" ]]; then
+    SHELL_RC="$HOME/.zshrc"
+else
+    SHELL_RC="$HOME/.bashrc"
+fi
 
 # 标记，用于避免重复追加别名
 ALIAS_MARKER="# >>> dotfiles bash_aliases >>>"
@@ -53,43 +64,89 @@ log_error() {
 }
 
 # ============================================
+# 0. 检查环境
+# ============================================
+check_environment() {
+    if [[ "$OS" == "Darwin" ]]; then
+        log_info "检测到 macOS 系统"
+        # 检查并安装 Homebrew
+        if ! command -v brew &>/dev/null; then
+            log_info "正在安装 Homebrew..."
+            /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+            # Apple Silicon Mac 需要手动添加 brew 到 PATH
+            if [[ -f /opt/homebrew/bin/brew ]]; then
+                eval "$(/opt/homebrew/bin/brew shellenv)"
+            fi
+            log_success "Homebrew 安装成功"
+        else
+            log_success "Homebrew 已安装"
+        fi
+    elif [[ "$OS" == "Linux" ]]; then
+        log_info "检测到 Linux 系统"
+        if ! command -v apt &>/dev/null; then
+            log_error "仅支持 apt 包管理器（Debian/Ubuntu），当前系统不兼容"
+            exit 1
+        fi
+    else
+        log_error "不支持的操作系统: $OS"
+        exit 1
+    fi
+}
+
+# ============================================
 # 1. 安装依赖工具
 # ============================================
 install_dependencies() {
     log_info "正在安装依赖工具..."
 
-    sudo apt update -qq
-
-    # 安装基础工具
-    for pkg in tmux vim xclip git; do
-        if dpkg -l "$pkg" &>/dev/null; then
-            log_success "$pkg 已安装"
-        else
-            log_info "正在安装 $pkg..."
-            if sudo apt install -y -qq "$pkg"; then
-                log_success "$pkg 安装成功"
+    if [[ "$OS" == "Darwin" ]]; then
+        # macOS: 通过 Homebrew 安装
+        for pkg in tmux vim glow git; do
+            if brew list "$pkg" &>/dev/null; then
+                log_success "$pkg 已安装"
             else
-                log_error "$pkg 安装失败"
+                log_info "正在安装 $pkg..."
+                if brew install "$pkg"; then
+                    log_success "$pkg 安装成功"
+                else
+                    log_error "$pkg 安装失败"
+                fi
             fi
-        fi
-    done
-
-    # 安装 glow（需要添加 charm 源）
-    if command -v glow &>/dev/null; then
-        log_success "glow 已安装"
+        done
     else
-        log_info "正在安装 glow..."
-        sudo mkdir -p /etc/apt/keyrings
-        if curl -fsSL https://repo.charm.sh/apt/gpg.key | sudo gpg --dearmor -o /etc/apt/keyrings/charm.gpg 2>/dev/null; then
-            echo "deb [signed-by=/etc/apt/keyrings/charm.gpg] https://repo.charm.sh/apt/ * *" | sudo tee /etc/apt/sources.list.d/charm.list >/dev/null
-            sudo apt update -qq
-            if sudo apt install -y -qq glow; then
-                log_success "glow 安装成功"
+        # Linux: 通过 apt 安装
+        sudo apt update -qq
+
+        for pkg in tmux vim xclip git; do
+            if dpkg -l "$pkg" &>/dev/null; then
+                log_success "$pkg 已安装"
             else
-                log_error "glow 安装失败，请手动安装: https://github.com/charmbracelet/glow"
+                log_info "正在安装 $pkg..."
+                if sudo apt install -y -qq "$pkg"; then
+                    log_success "$pkg 安装成功"
+                else
+                    log_error "$pkg 安装失败"
+                fi
             fi
+        done
+
+        # Linux: 安装 glow（需要添加 charm 源）
+        if command -v glow &>/dev/null; then
+            log_success "glow 已安装"
         else
-            log_error "glow 源添加失败，请手动安装: https://github.com/charmbracelet/glow"
+            log_info "正在安装 glow..."
+            sudo mkdir -p /etc/apt/keyrings
+            if curl -fsSL https://repo.charm.sh/apt/gpg.key | sudo gpg --dearmor -o /etc/apt/keyrings/charm.gpg 2>/dev/null; then
+                echo "deb [signed-by=/etc/apt/keyrings/charm.gpg] https://repo.charm.sh/apt/ * *" | sudo tee /etc/apt/sources.list.d/charm.list >/dev/null
+                sudo apt update -qq
+                if sudo apt install -y -qq glow; then
+                    log_success "glow 安装成功"
+                else
+                    log_error "glow 安装失败，请手动安装: https://github.com/charmbracelet/glow"
+                fi
+            else
+                log_error "glow 源添加失败，请手动安装: https://github.com/charmbracelet/glow"
+            fi
         fi
     fi
 }
@@ -116,11 +173,17 @@ deploy_configs() {
     cp "$SCRIPT_DIR/configs/.vimrc" ~/.vimrc
     log_success ".vimrc 已部署"
 
-    # 部署 bash_aliases（追加到 .bashrc，避免重复）
-    if grep -q "$ALIAS_MARKER" ~/.bashrc 2>/dev/null; then
+    # 确保 shell 配置文件存在
+    touch "$SHELL_RC"
+
+    # 部署 aliases（追加到 shell 配置文件，避免重复）
+    if grep -q "$ALIAS_MARKER" "$SHELL_RC" 2>/dev/null; then
         # 已存在标记，替换旧内容
-        # 删除旧的标记块
-        sed -i "/$ALIAS_MARKER/,/$ALIAS_MARKER_END/d" ~/.bashrc
+        if [[ "$OS" == "Darwin" ]]; then
+            sed -i '' "/$ALIAS_MARKER/,/$ALIAS_MARKER_END/d" "$SHELL_RC"
+        else
+            sed -i "/$ALIAS_MARKER/,/$ALIAS_MARKER_END/d" "$SHELL_RC"
+        fi
         log_info "已移除旧的别名配置，重新写入..."
     fi
 
@@ -129,8 +192,8 @@ deploy_configs() {
         echo "$ALIAS_MARKER"
         cat "$SCRIPT_DIR/configs/bash_aliases"
         echo "$ALIAS_MARKER_END"
-    } >> ~/.bashrc
-    log_success "bash_aliases 已追加到 ~/.bashrc"
+    } >> "$SHELL_RC"
+    log_success "aliases 已追加到 $SHELL_RC"
 }
 
 # ============================================
@@ -201,9 +264,8 @@ deploy_docs() {
 # ============================================
 apply_aliases() {
     log_info "正在使别名生效..."
-    # 在当前 shell 中不能直接 source，提示用户
-    log_success "别名已写入 ~/.bashrc"
-    log_info "请运行 'source ~/.bashrc' 或重新打开终端使别名生效"
+    log_success "别名已写入 $SHELL_RC"
+    log_info "请运行 'source $SHELL_RC' 或重新打开终端使别名生效"
 }
 
 # ============================================
@@ -225,7 +287,7 @@ show_summary() {
     echo -e "${GREEN}安装完成！${NC}"
     echo ""
     echo "后续步骤："
-    echo "  1. source ~/.bashrc        # 使别名生效"
+    echo "  1. source $SHELL_RC        # 使别名生效"
     echo "  2. tmux -V                 # 验证 tmux"
     echo "  3. glow --version          # 验证 glow"
     echo "  4. tl                      # 测试别名"
@@ -246,6 +308,7 @@ main() {
     echo -e "${BLUE}============================================${NC}"
     echo ""
 
+    check_environment
     install_dependencies
     deploy_configs
     install_tmux_plugins

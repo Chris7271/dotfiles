@@ -1,6 +1,6 @@
 # Dotfiles - 一键部署开发环境
 
-在新服务器上一键安装 tmux + vim + glow 工作环境。
+支持 macOS 和 Linux (Debian/Ubuntu)，一键安装 tmux + vim + glow 工作环境。
 
 ## 快速安装
 
@@ -10,6 +10,14 @@ cd ~/projects/dotfiles
 bash install.sh
 ```
 
+脚本会自动检测操作系统，选择对应的安装方式：
+
+| | macOS | Linux (Debian/Ubuntu) |
+|---|---|---|
+| 包管理器 | Homebrew（自动安装） | apt |
+| 剪贴板 | pbcopy（系统自带） | xclip（自动安装） |
+| Shell 配置 | ~/.zshrc | ~/.bashrc |
+
 ## 包含内容
 
 ### 配置文件
@@ -18,7 +26,7 @@ bash install.sh
 |------|------|
 | `configs/.tmux.conf` | tmux 配置（快捷键、状态栏、插件、Vim 风格复制） |
 | `configs/.vimrc` | Vim 配置（基础设置 + Markdown 预览集成） |
-| `configs/bash_aliases` | Bash 别名（tmux、git、导航、Markdown 快捷命令） |
+| `configs/bash_aliases` | Shell 别名（tmux、git、导航、Markdown 快捷命令） |
 
 ### 参考文档
 
@@ -27,20 +35,27 @@ bash install.sh
 | `docs/tmux-best-practices.md` | tmux 完整使用指南 |
 | `docs/tmux-shortcuts-reference.md` | tmux 快捷键速查表 |
 | `docs/vim-tmux-glow-guide.md` | Vim + tmux + glow Markdown 预览指南 |
-| `docs/bash-aliases-guide.md` | Bash 别名速查手册 |
+| `docs/bash-aliases-guide.md` | 别名速查手册 |
 
 ## install.sh 做了什么
 
-1. **安装依赖**: tmux, vim, glow, xclip, git
-2. **部署配置**: 备份已有配置（`.bak`），复制新配置到 `~/`
-3. **别名注入**: 将 `bash_aliases` 追加到 `~/.bashrc`（标记避免重复）
-4. **tmux 插件**: 克隆 TPM、tmux-resurrect、tmux-continuum
-5. **复制文档**: 参考文档复制到 `~/projects/tools/docs/`
+1. **检测环境**: 识别 macOS/Linux，macOS 自动安装 Homebrew
+2. **安装依赖**: tmux, vim, glow, git（Linux 额外安装 xclip）
+3. **部署配置**: 备份已有配置（`.bak`），复制新配置到 `~/`
+4. **别名注入**: 将别名追加到 shell 配置文件（标记避免重复）
+5. **tmux 插件**: 克隆 TPM、tmux-resurrect、tmux-continuum
+6. **复制文档**: 参考文档复制到 `~/projects/tools/docs/`
 
 ## 安装后验证
 
 ```bash
-source ~/.bashrc          # 使别名生效
+# macOS
+source ~/.zshrc
+
+# Linux
+source ~/.bashrc
+
+# 通用验证
 tmux -V                   # 验证 tmux
 glow --version            # 验证 glow
 tl                        # 测试别名
@@ -77,7 +92,7 @@ mdp file.md   # glow 预览
 
 ```
 dotfiles/
-├── install.sh              # 一键安装脚本
+├── install.sh              # 一键安装脚本（macOS / Linux）
 ├── README.md               # 本文件
 ├── configs/
 │   ├── .tmux.conf          # tmux 配置
