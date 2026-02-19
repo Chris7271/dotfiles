@@ -48,7 +48,7 @@ tmux attach -t work       # 连接会话
 tmux kill-session -t work # 删除会话
 ```
 
-**Bash 别名**（已配置在 `~/.bashrc`）：
+**Shell 别名**（macOS 配置在 `~/.zshrc`，Linux 配置在 `~/.bashrc`）：
 ```bash
 tn work                   # = tmux new -s work
 tl                        # = tmux ls
@@ -196,12 +196,18 @@ tk work                   # = tmux kill-session -t work
 | `Ctrl+b ]` | 粘贴 | 粘贴复制的内容 |
 | `Ctrl+b P` | 选择粘贴缓冲区 🔥 | 查看历史复制 |
 
-**系统剪贴板支持（xclip）**：
+**系统剪贴板支持**：
 
-`y` 键默认只复制到 tmux 内部缓冲区。安装 xclip 后，`y` 会同时复制到系统剪贴板，可用 `Ctrl+Shift+V` 粘贴到任何程序：
+`y` 键复制到系统剪贴板的方式因平台而异（已在配置中自动检测）：
+
+| 平台 | 剪贴板工具 | 粘贴方式 |
+|------|-----------|---------|
+| macOS | pbcopy（系统自带） | `Cmd+V` |
+| Linux | xclip（需安装） | `Ctrl+Shift+V` |
 
 ```bash
-sudo apt install xclip          # 安装
+# Linux 需要安装 xclip
+sudo apt install xclip
 Ctrl+b r                        # 重载 tmux 配置使其生效
 ```
 
@@ -412,6 +418,31 @@ tmux source-file ~/.tmux.conf
 # 或在 tmux 中按
 Ctrl+b r
 ```
+
+---
+
+## 🍎 macOS Terminal.app 配置
+
+macOS Terminal.app 需要额外配置才能使用 `Alt+数字` 和 `Alt+方向键` 快捷键。
+
+### 开启 Option 作为 Meta 键
+
+**Terminal** → **Settings** (`Cmd+,`) → **Profiles** → **Keyboard** → 勾选 **"Use Option as Meta key"**
+
+### 配置 Option+方向键
+
+开启 Meta 键后，`Alt+数字` 可以正常使用，但 `Alt+方向键` 仍需手动配置。在同一个 Keyboard 页面点 **+** 添加：
+
+| 按键 | Action | 输入内容 |
+|---|---|---|
+| `⌥←` | Send Text | 按 `Esc`，输入 `[1;3D` |
+| `⌥→` | Send Text | 按 `Esc`，输入 `[1;3C` |
+| `⌥↑` | Send Text | 按 `Esc`，输入 `[1;3A` |
+| `⌥↓` | Send Text | 按 `Esc`，输入 `[1;3B` |
+
+> 输入框中先按 **Esc** 键（显示 `\033`），再输入后面的字符。
+
+配置完成后即可使用 `Alt+方向键` 切换窗格。Linux 用户无需此配置。
 
 ---
 

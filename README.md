@@ -63,6 +63,31 @@ tn test                   # 创建 tmux 会话
 vim test.md               # 在 tmux 中按 ,p 预览
 ```
 
+## macOS Terminal.app 额外配置
+
+macOS Terminal.app 默认不将 Option 键作为 Meta 键发送，需要手动配置，否则 `Alt+数字` 跳转窗口和 `Alt+方向键` 切换窗格无法使用。
+
+### 1. 开启 Option 作为 Meta 键
+
+**Terminal** → **Settings** (`Cmd+,`) → **Profiles** → **Keyboard** → 勾选 **"Use Option as Meta key"**
+
+此设置使 `Alt+1/2/3...` 跳转 tmux 窗口生效。
+
+### 2. 配置 Option+方向键发送正确的转义序列
+
+即使开启了上一步，`Option+方向键` 仍会发送单词跳转序列而非 tmux 期望的 Meta+Arrow。需要在同一个 Keyboard 设置页面中，点 **+** 手动添加 4 个按键映射：
+
+| 按键 | Action | 输入内容 |
+|---|---|---|
+| `⌥←` | Send Text | 按 `Esc` 键，再输入 `[1;3D` |
+| `⌥→` | Send Text | 按 `Esc` 键，再输入 `[1;3C` |
+| `⌥↑` | Send Text | 按 `Esc` 键，再输入 `[1;3A` |
+| `⌥↓` | Send Text | 按 `Esc` 键，再输入 `[1;3B` |
+
+> **提示**：在输入框中先按一下 **Esc 键**（显示为 `\033`），然后再输入后面的字符。这是标准的 xterm Meta+Arrow 转义序列。
+
+配置完成后 `Alt+方向键` 即可在 tmux 中切换窗格。Linux 用户无需此配置。
+
 ## 常用别名
 
 ```bash
